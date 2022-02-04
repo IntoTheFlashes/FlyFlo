@@ -1,49 +1,96 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
-    new Rigidbody rigidbody;
     [SerializeField] float relativeUpThrust = 2f;
     [SerializeField] float rotationThrust = 1f;
+    [SerializeField] AudioClip mainThrusterAudio;
 
-    // Start is called before the first frame update
+    [SerializeField] ParticleSystem mainThrusterParticles;
+    [SerializeField] ParticleSystem leftThrusterParticles;
+    [SerializeField] ParticleSystem rightThrusterParticles;
+
+    AudioSource audioSource;
+    new Rigidbody rigidbody;
+
     void Start()
     {
         rigidbody = GetComponent<Rigidbody>();
+        audioSource = GetComponent<AudioSource>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         ProcessThrustInput();
         ProcessRotationInput();
     }
 
-    // Thrust upwards when user presses W, Space, or Up Arrow
     void ProcessThrustInput ()
     {
         if(Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.UpArrow))
         {
-            Debug.Log("Now thrusting!");
-            rigidbody.AddRelativeForce(Vector3.up * relativeUpThrust * Time.deltaTime);
+            StartThrusting();
+        }
+
+        else
+        {
+            StopThrusting();
         }
     }
 
-    // Rotate when user presses A, Left Arrow, D, or Right Arrow
     void ProcessRotationInput()
     {
         if(Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
         {
-            Debug.Log("Rotating left!");
-            ApplyRotation(rotationThrust);
+            RotateLeft();
         }
 
         else if(Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
         {
-            Debug.Log("Rotating right!");
-            ApplyRotation(-rotationThrust);
+            RotateRight();
+        }
+
+        else
+        {
+            StopSideThrusterParticles();
+        }
+    }
+
+    void StartThrusting()
+    {
+        rigidbody.AddRelativeForce(Vector3.up * relativeUpThrust * Time.deltaTime);
+        if (!audioSource.isPlaying)
+        {
+            audioSource.PlayOneShot(mainThrusterAudio);
+        }
+
+        if (!mainThrusterParticles.isPlaying)
+        {
+            mainThrusterParticles.Play();
+        }
+    }
+
+    void StopThrusting()
+    {
+        audioSource.Stop();
+        mainThrusterParticles.Stop();
+    }
+
+    void RotateLeft()
+    {
+        ApplyRotation(rotationThrust);
+        if (!rightThrusterParticles.isPlaying)
+        {
+            rightThrusterParticles.Play();
+        }
+    }
+
+    void RotateRight()
+    {
+        ApplyRotation(-rotationThrust);
+        if (!leftThrusterParticles.isPlaying)
+        {
+            leftThrusterParticles.Play();
         }
     }
 
@@ -52,5 +99,11 @@ public class Movement : MonoBehaviour
         rigidbody.freezeRotation = true;    // freeze physics system to allow priority to manual input
         transform.Rotate(Vector3.forward * Time.deltaTime * rotationThisFrame);
         rigidbody.freezeRotation = false;   // reactivate physics system
+    }
+
+        void StopSideThrusterParticles()
+    {
+        rightThrusterParticles.Stop();
+        leftThrusterParticles.Stop();
     }
 }
